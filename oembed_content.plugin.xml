@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<pluggable type="plugin">
+	<name>OEmbed Content</name>
+	<license url="http://www.apache.org/licenses/LICENSE-2.0.html">Apache Software License 2.0</license>
+	<author url="http://christian-gredig.de/">Christian Gredig</author>
+	<version>1.0</version>
+	<url>http://habariproject.org/</url>
+	<description><![CDATA[Adds embedded content by just passing the URL of the webpage to the publish form or a dash block.]]></description>
+	<copyright>2013</copyright>
+	<guid>2188F469-5C2E-483B-A8BC-5B7AB6A80E41</guid>
+	<help><value><![CDATA[
+	]]></value></help>
+</pluggable>
