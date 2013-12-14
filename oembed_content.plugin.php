@@ -69,17 +69,13 @@ class OEmbedContent extends Plugin
 			$source = $form->insert('content', 'text', 'webpage_url', 'null:null', 'Source URL');
 			$source->value = (isset($post->info->webpage_url)) ? $post->info->webpage_url : '';
 			$form->webpage_url->template = "admincontrol_text";
-			if(isset($post->info->webpage_url) && !empty($post->info->webpage_url)) {
-				$preview = '<div class="container transparent">' . $this->discover($post->info->webpage_url)->html . '</div>';
+			if(isset($post->content) && !empty($post->content)) {
+				$preview = '<div class="container transparent">' . $post->content . '</div>';
 			}
 			else {
 				$preview = '';
 			}
-			$form->insert('content', 'static', 'preview', $preview);
-
-			// Re-create the Content field
-			//$form->content->remove();
-			$content = $form->append( 'hidden', 'content', 'null:null' );
+			$form->append('static', 'content', $preview);
 		}
 	}
 	
@@ -95,9 +91,15 @@ class OEmbedContent extends Plugin
 				break;
 			}
 		}
-		$json = RemoteRequest::get_contents($source);
-		$info = json_decode($json);
-		return $info;
+		if(isset($source)) {
+			$json = RemoteRequest::get_contents($source);
+			$info = json_decode($json);
+			return $info;
+		}
+		else {
+			Session::error(_t("No embeddable content found", __CLASS__));
+			return false;
+		}
 	}
 	
 	public function create_post($form)
@@ -113,8 +115,11 @@ class OEmbedContent extends Plugin
 		$post->user_id = User::identify()->id;
 		$post->content = $content->html;
 		$post->title = $content->title;
+		$post->insert();
 		$post->info->webpage_url = $url;
 		$post->publish();
+		
+		Session::notice(_t("Post published successfully", __CLASS__));
 		
 		return false;
 	}
@@ -126,6 +131,7 @@ class OEmbedContent extends Plugin
 	{
 		if ($post->content_type == Post::type('oembed')) {
 			$post->info->webpage_url = $form->webpage_url->value;
+			$post->content = $this->discover($form->webpage_url->value)->html;
 		}
 	}
 	
