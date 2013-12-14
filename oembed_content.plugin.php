@@ -1,6 +1,15 @@
 <?php
 class OEmbedContent extends Plugin
 {
+	/**
+	 * Register the template.
+	 **/
+	function action_init()
+	{
+		// $this->load_text_domain( 'simpledashblock' );
+		$this->add_template( 'block.add_oembed', dirname(__FILE__) . '/block.add_oembed.php' );
+	}
+	
 	public function action_plugin_activation( $plugin_file )
 	{
 		Post::add_new_type( 'oembed' );
@@ -25,6 +34,35 @@ class OEmbedContent extends Plugin
 		return isset($names[$type][$foruse]) ? $names[$type][$foruse] : $type; 
 	}
 	
+	/**
+	 * Add to the list of possible block types.
+	 **/
+	public function filter_block_list($block_list)
+	{
+		$block_list['add_oembed'] = _t('OEmbed Content', __CLASS__);
+		return $block_list;
+	}
+	
+	/**
+	 * Return a list of blocks that can be used for the dashboard
+	 * @param array $block_list An array of block names, indexed by unique string identifiers
+	 * @return array The altered array
+	 */
+	public function filter_dashboard_block_list($block_list)
+	{
+		$block_list['add_oembed'] = _t('OEmbed content', __CLASS__);
+		return $block_list;
+	}
+	
+	public function action_block_content_add_oembed($block, $theme)
+	{
+		$form = new FormUI(__CLASS__);
+		$form->append('text', 'webpage_url', 'null:null', _t('Web page URL:', __CLASS__));
+		$form->append('submit', 'submit', _t('Submit'));
+		$form->on_success(array($this, 'create_post'));
+		$block->form = $form;
+	}
+	
 	public function action_form_publish( $form, $post )
 	{
 		if( $form->content_type->value == Post::type( 'oembed' ) ) {
@@ -32,7 +70,7 @@ class OEmbedContent extends Plugin
 			$source->value = (isset($post->info->webpage_url)) ? $post->info->webpage_url : '';
 			$form->webpage_url->template = "admincontrol_text";
 			if(isset($post->info->webpage_url) && !empty($post->info->webpage_url)) {
-				$preview = '<div class="container transparent">' . $this->discover($post->info->webpage_url) . '</div>';
+				$preview = '<div class="container transparent">' . $this->discover($post->info->webpage_url)->html . '</div>';
 			}
 			else {
 				$preview = '';
@@ -59,7 +97,26 @@ class OEmbedContent extends Plugin
 		}
 		$json = RemoteRequest::get_contents($source);
 		$info = json_decode($json);
-		return $info->html;
+		return $info;
+	}
+	
+	public function create_post($form)
+	{
+		$url = $form->webpage_url->value;
+		if(!isset($url) || empty($url)) return true; // true = yes, an error has occured
+		
+		$content = $this->discover($url);
+		if(!isset($content) || empty($content)) return true;
+		
+		$post = new Post();
+		$post->content_type = Post::type('oembed');
+		$post->user_id = User::identify()->id;
+		$post->content = $content->html;
+		$post->title = $content->title;
+		$post->info->webpage_url = $url;
+		$post->publish();
+		
+		return false;
 	}
 	
 	/**
