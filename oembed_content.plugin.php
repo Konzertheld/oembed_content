@@ -117,6 +117,7 @@ class OEmbedContent extends Plugin
 		$post->title = $content->title;
 		$post->insert();
 		$post->info->webpage_url = $url;
+		$post->info->provider = $content->provider_name;
 		$post->publish();
 		
 		Session::notice(_t("Post published successfully", __CLASS__));
@@ -131,7 +132,9 @@ class OEmbedContent extends Plugin
 	{
 		if ($post->content_type == Post::type('oembed')) {
 			$post->info->webpage_url = $form->webpage_url->value;
-			$post->content = $this->discover($form->webpage_url->value)->html;
+			$content = $this->discover($form->webpage_url->value);
+			$post->info->provider = $content->provider_name;
+			$post->content = $content->html;
 		}
 	}
 	
