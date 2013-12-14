@@ -11,6 +11,20 @@ class OEmbedContent extends Plugin
 		Post::deactivate_post_type( 'oembed' );
 	}
 	
+	/**
+	* Create name string. This is where you make what it displays pretty.
+	**/
+	public function filter_post_type_display($type, $foruse)
+	{ 
+		$names = array( 
+			'oembed' => array(
+				'singular' => _t('Embedded content', __CLASS__),
+				'plural' => _t('Embedded content', __CLASS__),
+			)
+		); 
+		return isset($names[$type][$foruse]) ? $names[$type][$foruse] : $type; 
+	}
+	
 	public function action_form_publish( $form, $post )
 	{
 		if( $form->content_type->value == Post::type( 'oembed' ) ) {
